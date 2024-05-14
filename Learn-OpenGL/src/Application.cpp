@@ -8,6 +8,7 @@ using namespace std;
 #include "Camera.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Material.h"
 #include "Renderer.h"
 #include "Debugger.h"
 #include "VertexArray.h"
@@ -15,25 +16,22 @@ using namespace std;
 #include "ElementBuffer.h"
 #include "VertexBufferLayout.h"
 
-#include "SpaceMaterial.h"
-#include "RockMaterial.h"
-#include "EarthMaterial.h"
-
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
 constexpr int WIDTH = 1920, HEIGHT = 960;
+//constexpr int WIDTH = 800, HEIGHT = 600;
 int SCREEN_WIDTH, SCREEN_HEIGHT;
 constexpr float PI = 3.14159265359;
 
 // Function prototypes
-static void keyCallback(GLFWwindow* window, int key, int scanCode, int action, int mode);
-static void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
-static void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 static void doMovement();
+static void keyCallback(GLFWwindow* window, int key, int scanCode, int action, int mode);
+static void mouseCallback(GLFWwindow* window, double xPos, double yPos);
+static void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 
 // Camera
-Camera  camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera  camera(glm::vec3(0.0f, 0.0f, 0.0f));
 float lastX = WIDTH / 2.0;
 float lastY = HEIGHT / 2.0;
 bool keys[1024];
@@ -41,6 +39,26 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// Objects
+struct Object
+{
+	Texture* m_Texture;
+	int m_TextureSlot;
+	bool m_UseTexture;
+	float m_TexOpacity;
+	glm::vec4 m_Color;
+	glm::mat4 m_ScaleMat;
+	glm::mat4 m_RotateMat;
+	glm::mat4 m_TranslateMat;
+	glm::vec3 m_RotationDirection;
+	float m_RotationSpeed;
+	
+	Object(Texture* texture, int textureSlot, bool useTexture, float texOpacity, glm::vec4 color, glm::mat4 scaleMat, glm::mat4 rotateMat,
+		glm::mat4 translateMat, glm::vec3 rotationDirection, float rotationSpeed) : m_Texture(texture), m_TextureSlot(textureSlot),
+		m_UseTexture(useTexture), m_TexOpacity(texOpacity), m_Color(color), m_ScaleMat(scaleMat), m_RotateMat(rotateMat), 
+		m_TranslateMat(translateMat), m_RotationDirection(rotationDirection), m_RotationSpeed(rotationSpeed) {};
+};
 
 int main(void)
 {
@@ -55,7 +73,7 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
-	window = glfwCreateWindow(WIDTH, HEIGHT, "SPACE WAR", NULL, NULL);
+	window = glfwCreateWindow(WIDTH, HEIGHT, "Space War", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -69,7 +87,7 @@ int main(void)
 	glfwSetKeyCallback(window, keyCallback);
 	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetScrollCallback(window, scrollCallback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	// Used to sync the rendering loop with the screen frame rate
 	glfwSwapInterval(1);
@@ -86,35 +104,6 @@ int main(void)
 	glCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 	
 	{
-		//unsigned int n = 64;
-		//float radius = 1.0f; // radius of the circle
-		//float angleStep = 2 * PI / n; // angle step (in radians) between each point
-		//float *vertices = new float[5 * (n + 1)]; // 3 for position, 2 for texture coordinates
-		//vertices[0] = 0.0f; // center x
-		//vertices[1] = 0.0f; // center y
-		//vertices[2] = 0.0f; // center z
-		//vertices[3] = 2.0f;
-		//vertices[4] = 2.0f;
-		//for (int i = 1; i <= n; i++)
-		//{
-		//	float angle = (i - 1) * angleStep;
-		//	vertices[5 * i] = cos(angle) * radius + vertices[0]; // positions[0] = center[0]
-		//	vertices[5 * i + 1] = sin(angle) * radius + vertices[1]; // positions[1] = center[1]
-		//	vertices[5 * i + 2] = 0.0f; // positions[2] = center[2]
-		//	// Texture coordinates
-		//	vertices[5 * i + 3] = (cos(angle) + 1.0f) / 2.0f; // x = (cos(angle) + 1) / 2
-		//	vertices[5 * i + 4] = (sin(angle) + 1.0f) / 2.0f; // y = (sin(angle) + 1) / 2
-		//}
-		//// number of elements = number of triangles * 3
-		//unsigned int m = n * 3; // number of elements (triangles)
-		//unsigned int *elements = new unsigned int[m]; // elements of the triangles
-		//for (int i = 0; i < n; i++)
-		//{
-		//	elements[3 * i] = 0; // center
-		//	elements[3 * i + 1] = i + 1; // current point
-		//	elements[3 * i + 2] = (i + 1) % n + 1; // next point
-		//}
-
 		unsigned int n = 24;
 		unsigned int dataPerVertex = 5;
 		float vertices[] = {
@@ -204,49 +193,66 @@ int main(void)
 		// --------
 		Renderer renderer;
 
-		// Projection Matrix
-		// -----------------
-		glm::mat4 projectionMat = glm::perspective(45.0f, (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 1000.0f);
+		// Space box
+		// ---------
+		Object space
+		(
+			new Texture("res/textures/space.jpg"),
+			0,
+			true,
+			0.5f,
+			glm::vec4(1.0f),
+			glm::scale(glm::mat4(1.0f), glm::vec3(400.0f)),
+			glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f)),
+			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			0.1f
+		);
 
-		// View Matrix
-		// -----------
-		glm::mat4 viewMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		// Earth
+		// -----
+		Object earth
+		(
+			new Texture("res/textures/earth.jpg"),
+			1,
+			true,
+			1.0f,
+			glm::vec4(1.0f),
+			glm::scale(glm::mat4(1.0f), glm::vec3(0.5f)),
+			glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f)),
+			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f)),
+			glm::vec3(1.0f, 0.5f, 0.0f),
+			1.0f
+		);
 
-		// Textures
-		// --------
-		Texture spaceTex("res/textures/space.jpg");
-		Texture earthTex("res/textures/earth.jpg");
-		Texture rockTex("res/textures/rock.png");
+		Object objects[] = { space, earth };
 
 		while (!glfwWindowShouldClose(window))
 		{
+			float currentFrame = glfwGetTime();
+			deltaTime = currentFrame - lastFrame;
+			lastFrame = currentFrame;
+
+			glfwPollEvents();
+			doMovement();
+
 			renderer.clear();
 			
-			// Update the view matrix by setting x, y
-			// --------------------------------------
+			glm::mat4 projectionMat = glm::perspective(camera.getZoom(), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 1000.0f);
+			glm::mat4 viewMat = camera.GetViewMatrix();
+
+			for (Object& object : objects)
 			{
-				//viewMat[3][0] += x;
-				//viewMat[3][2] += z;
-				/*viewMat = glm::rotate(viewMat, 0.001f, glm::vec3(0.0f, 1.0f, 0.0f));*/
+				object.m_Texture->bind(object.m_TextureSlot);
+				Material material(shader, object.m_ScaleMat, object.m_RotateMat, object.m_TranslateMat, object.m_RotationSpeed, object.m_RotationDirection, viewMat, projectionMat);
+				if (object.m_UseTexture)
+					material.setMaterialTexture(object.m_TextureSlot, object.m_TexOpacity);
+				else
+					material.setMaterialColor(object.m_Color);
+				renderer.draw(vao, ebo, shader);
 			}
 
-			spaceTex.bind();
-			SpaceMaterial spaceMaterial(shader, viewMat, projectionMat, 1.0f, 1.0f, 0, 1);
-			renderer.draw(vao, ebo, shader);
-
-			SpaceMaterial spaceMaterial2(shader, viewMat, projectionMat, 0.0f, 0.1f, 0, 0);
-			renderer.draw(vao, ebo, shader);
-
-			rockTex.bind(1);
-			RockMaterial rockMaterial(shader, viewMat, projectionMat, 1);
-			renderer.draw(vao, ebo, shader);
-
-			earthTex.bind(2);
-			EarthMaterial earthMaterial(shader, viewMat, projectionMat, 2);
-			renderer.draw(vao, ebo, shader);
-
 			glfwSwapBuffers(window);
-			glfwPollEvents();
 		}
 	}
 
@@ -254,20 +260,68 @@ int main(void)
 	return 0;
 }
 
-void keyCallback(GLFWwindow* window, int key, int scanCode, int action, int mode)
+void doMovement()
 {
+	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
+	{
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+	}
 
+	if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN])
+	{
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	}
+
+	if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT])
+	{
+		camera.ProcessKeyboard(LEFT, deltaTime);
+	}
+
+	if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT])
+	{
+		camera.ProcessKeyboard(RIGHT, deltaTime);
+	}
 }
 
-void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
+void keyCallback(GLFWwindow* window, int key, int scanCode, int action, int mode)
 {
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+
+	if (key >= 0 && key < 1024)
+	{
+		if (action == GLFW_PRESS)
+		{
+			keys[key] = true;
+		}
+		else if (action == GLFW_RELEASE)
+		{
+			keys[key] = false;
+		}
+	}
 }
 
 void mouseCallback(GLFWwindow* window, double xPos, double yPos)
 {
+	if (firstMouse)
+	{
+		lastX = xPos;
+		lastY = yPos;
+		firstMouse = false;
+	}
+
+	GLfloat xOffset = xPos - lastX;
+	GLfloat yOffset = lastY - yPos;
+
+	lastX = xPos;
+	lastY = yPos;
+
+	camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
-void doMovement()
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 {
-
+	camera.ProcessMouseScroll(yOffset);
 }
