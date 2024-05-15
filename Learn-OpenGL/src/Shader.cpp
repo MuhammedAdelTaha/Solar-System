@@ -10,11 +10,6 @@ Shader::Shader(const string& filepath) : m_FilePath(filepath)
 	m_RendererId = createProgram(basicShaders.vertexShaderSrc, basicShaders.fragmentShaderSrc);
 }
 
-Shader::~Shader()
-{
-	glCall(glDeleteProgram(m_RendererId));
-}
-
 void Shader::bind() const
 {
 	glCall(glUseProgram(m_RendererId));
@@ -23,6 +18,11 @@ void Shader::bind() const
 void Shader::unbind() const
 {
 	glCall(glUseProgram(0));
+}
+
+void Shader::deleteProgram() const
+{
+	glCall(glDeleteProgram(m_RendererId));
 }
 
 void Shader::setUniform1i(const string& name, int v0) const

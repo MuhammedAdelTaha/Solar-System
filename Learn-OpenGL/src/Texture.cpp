@@ -22,11 +22,6 @@ Texture::Texture(const string& filePath) : m_FilePath(filePath), m_LocalBuffer(n
 		stbi_image_free(m_LocalBuffer);
 }
 
-Texture::~Texture()
-{
-	glCall(glDeleteTextures(1, &m_RendererId));
-}
-
 void Texture::bind(unsigned int slot) const
 {
 	glCall(glActiveTexture(GL_TEXTURE0 + slot));
@@ -36,4 +31,9 @@ void Texture::bind(unsigned int slot) const
 void Texture::unbind() const
 {
 	glCall(glBindTexture(GL_TEXTURE_2D, 0));
+}
+
+void Texture::deleteTexture() const
+{
+	glCall(glDeleteTextures(1, &m_RendererId));
 }

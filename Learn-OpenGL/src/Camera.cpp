@@ -39,12 +39,12 @@ void Camera::ProcessMouseMovement(float xOffset, float yOffset, bool constrainPi
 
 void Camera::ProcessMouseScroll(float yOffset)
 {
-	if (m_Zoom >= 1.0f && m_Zoom <= 45.0f)
+	/*if (m_Zoom >= 1.0f && m_Zoom <= 45.0f)
 		m_Zoom -= yOffset;
 	if (m_Zoom <= 1.0f)
 		m_Zoom = 1.0f;
 	if (m_Zoom >= 45.0f)
-		m_Zoom = 45.0f;
+		m_Zoom = 45.0f;*/
 }
 
 void Camera::updateCameraVectors()

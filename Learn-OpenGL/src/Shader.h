@@ -13,9 +13,9 @@ class Shader
 	unordered_map<string, int> m_UniformLocationCache;
 public:
 	Shader(const string& filepath);
-	~Shader();
 	void bind() const;
 	void unbind() const;
+	void deleteProgram() const;
 	void setUniform1i(const string& name, int v0) const;
 	void setUniform1f(const string& name, float v0) const;
 	void setUniform2f(const string& name, float v0, float v1) const;

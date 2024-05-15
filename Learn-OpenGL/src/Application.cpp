@@ -8,7 +8,6 @@ using namespace std;
 #include "Camera.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Material.h"
 #include "Renderer.h"
 #include "Debugger.h"
 #include "VertexArray.h"
@@ -16,13 +15,30 @@ using namespace std;
 #include "ElementBuffer.h"
 #include "VertexBufferLayout.h"
 
+#include "ColorMaterial.h"
+#include "TextureMaterial.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+#include "Shapes.h"
+
+const char* ColorShaderPath = "res/shaders/Color.shader";
+const char* TextureShaderPath = "res/shaders/Texture.shader";
+
+const char* SpaceTexturePath = "res/textures/space.jpg";
+const char* SunTexturePath = "res/textures/sun.jpg";
+const char* MercuryTexturePath = "res/textures/mercury.jpg";
+const char* VenusTexturePath = "res/textures/venus.jpg";
+const char* EarthTexturePath = "res/textures/earth.jpg";
+const char* MarsTexturePath = "res/textures/mars.jpg";
+const char* JupiterTexturePath = "res/textures/jupiter.jpg";
+const char* SaturnTexturePath = "res/textures/saturn.jpg";
+const char* UranusTexturePath = "res/textures/uranus.jpg";
+const char* NeptuneTexturePath = "res/textures/neptune.jpg";
+
 constexpr int WIDTH = 1920, HEIGHT = 960;
-//constexpr int WIDTH = 800, HEIGHT = 600;
 int SCREEN_WIDTH, SCREEN_HEIGHT;
-constexpr float PI = 3.14159265359;
 
 // Function prototypes
 static void doMovement();
@@ -31,7 +47,7 @@ static void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 static void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 
 // Camera
-Camera  camera(glm::vec3(0.0f, 0.0f, 0.0f));
+Camera  camera(glm::vec3(0.0f, 0.0f, 100.0f));
 float lastX = WIDTH / 2.0;
 float lastY = HEIGHT / 2.0;
 bool keys[1024];
@@ -39,26 +55,6 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-// Objects
-struct Object
-{
-	Texture* m_Texture;
-	int m_TextureSlot;
-	bool m_UseTexture;
-	float m_TexOpacity;
-	glm::vec4 m_Color;
-	glm::mat4 m_ScaleMat;
-	glm::mat4 m_RotateMat;
-	glm::mat4 m_TranslateMat;
-	glm::vec3 m_RotationDirection;
-	float m_RotationSpeed;
-	
-	Object(Texture* texture, int textureSlot, bool useTexture, float texOpacity, glm::vec4 color, glm::mat4 scaleMat, glm::mat4 rotateMat,
-		glm::mat4 translateMat, glm::vec3 rotationDirection, float rotationSpeed) : m_Texture(texture), m_TextureSlot(textureSlot),
-		m_UseTexture(useTexture), m_TexOpacity(texOpacity), m_Color(color), m_ScaleMat(scaleMat), m_RotateMat(rotateMat), 
-		m_TranslateMat(translateMat), m_RotationDirection(rotationDirection), m_RotationSpeed(rotationSpeed) {};
-};
 
 int main(void)
 {
@@ -104,128 +100,230 @@ int main(void)
 	glCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 	
 	{
-		unsigned int n = 24;
-		unsigned int dataPerVertex = 5;
-		float vertices[] = {
-			-1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
-			 1.0f, -1.0f, -1.0f, 1.0f, 0.0f,
-			 1.0f,  1.0f, -1.0f, 1.0f, 1.0f,
-			-1.0f,  1.0f, -1.0f, 0.0f, 1.0f,
-
-			-1.0f, -1.0f,  1.0f, 0.0f, 0.0f,
-			 1.0f, -1.0f,  1.0f, 1.0f, 0.0f,
-			 1.0f,  1.0f,  1.0f, 1.0f, 1.0f,
-			-1.0f,  1.0f,  1.0f, 0.0f, 1.0f,
-
-			-1.0f,  1.0f,  1.0f, 1.0f, 0.0f,
-			-1.0f,  1.0f, -1.0f, 1.0f, 1.0f,
-			-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,
-			-1.0f, -1.0f,  1.0f, 0.0f, 0.0f,
-
-			 1.0f,  1.0f,  1.0f, 1.0f, 0.0f,
-			 1.0f,  1.0f, -1.0f, 1.0f, 1.0f,
-			 1.0f, -1.0f, -1.0f, 0.0f, 1.0f,
-			 1.0f, -1.0f,  1.0f, 0.0f, 0.0f,
-								
-			-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,
-			 1.0f, -1.0f, -1.0f, 1.0f, 1.0f,
-			 1.0f, -1.0f,  1.0f, 1.0f, 0.0f,
-			-1.0f, -1.0f,  1.0f, 0.0f, 0.0f,
-
-			-1.0f,  1.0f, -1.0f, 0.0f, 1.0f,
-			 1.0f,  1.0f, -1.0f, 1.0f, 1.0f,
-			 1.0f,  1.0f,  1.0f, 1.0f, 0.0f,
-			-1.0f,  1.0f,  1.0f, 0.0f, 0.0f
-		};
-
-		unsigned int m = 36;
-		unsigned int elements[] = {
-			0, 1, 2,
-			2, 3, 0,
-
-			4, 5, 6,
-			6, 7, 4,
-
-			8, 9, 10,
-			10, 11, 8,
-
-			12, 13, 14,
-			14, 15, 12,
-
-			16, 17, 18,
-			18, 19, 16,
-
-			20, 21, 22,
-			22, 23, 20
-		};
+		Shape cube = getCube();
+		vector<float> cubeVertices = cube.vertices;
+		vector<unsigned int> cubeElements = cube.elements;
+		unsigned int n = cubeVertices.size();
+		unsigned int m = cubeElements.size();
 		
-		// Vertex Buffer
-		// -------------
-		VertexBuffer vbo(n * dataPerVertex * sizeof(float), vertices);
+		float* cubeVerticesArr = &cubeVertices[0];
+		unsigned int* cubeElementsArr = &cubeElements[0];
 
-		// Vertex Attributes and Layout
-		// ----------------------------
+		VertexBuffer cubeVBO(n * sizeof(float), cubeVerticesArr);
+
 		VertexAttribute position(3, GL_FLOAT, GL_FALSE);
 		VertexAttribute textureCoord(2, GL_FLOAT, GL_FALSE);
-		VertexBufferLayout layout;
-		layout.addAttributes({ position, textureCoord });
+		VertexAttribute normal(3, GL_FLOAT, GL_FALSE);
+		VertexBufferLayout cubeLayout;
+		cubeLayout.addAttributes({ position, textureCoord, normal });
 		
-		// Vertex Array
-		// ------------
-		VertexArray vao;
-		vao.addBuffer(vbo, layout); 
+		VertexArray cubeVAO;
+		cubeVAO.addBuffer(cubeVBO, cubeLayout); 
 
-		// Element/Index Buffer
-		// --------------------
-		ElementBuffer ebo(m, elements);
+		ElementBuffer cubeEBO(m, cubeElementsArr);
 
-		// Unbind
-		// ------
-		vao.unbind();
-		vbo.unbind();
-		ebo.unbind();
-		
-		// Basic shader
-		// ------------
-		Shader shader("res/shaders/Basic.shader");
+		cubeVAO.unbind();
+		cubeVBO.unbind();
+		cubeEBO.unbind();
+
+		Shape sphere = getSphere();
+		vector<float> sphereVertices = sphere.vertices;
+		vector<unsigned int> sphereElements = sphere.elements;
+		n = sphereVertices.size();
+		m = sphereElements.size();
+
+		float* sphereVerticesArr = &sphereVertices[0];
+		unsigned int* sphereElementsArr = &sphereElements[0];
+
+		VertexBuffer sphereVBO(n * sizeof(float), sphereVerticesArr);
+
+		VertexBufferLayout sphereLayout;
+		sphereLayout.addAttributes({ position, textureCoord, normal });
+
+		VertexArray sphereVAO;
+		sphereVAO.addBuffer(sphereVBO, sphereLayout);
+
+		ElementBuffer sphereEBO(m, sphereElementsArr);
+
+		sphereVAO.unbind();
+		sphereVBO.unbind();
+		sphereEBO.unbind();
 
 		// Renderer
 		// --------
 		Renderer renderer;
 
+		// Shaders
+		// -------
+		Shader colorShader(ColorShaderPath);
+		Shader textureShader(TextureShaderPath);
+
+		// Textures
+		// --------
+		Texture spaceTexture(SpaceTexturePath);
+		Texture sunTexture(SunTexturePath);
+		Texture mercuryTexture(MercuryTexturePath);
+		Texture venusTexture(VenusTexturePath);
+		Texture earthTexture(EarthTexturePath);
+		Texture marsTexture(MarsTexturePath);
+		Texture jupiterTexture(JupiterTexturePath);
+		Texture saturnTexture(SaturnTexturePath);
+		Texture uranusTexture(UranusTexturePath);
+		Texture neptuneTexture(NeptuneTexturePath);
+
+		// Sun Light
+		// ---------
+		ColorMaterial* sunLight	= new ColorMaterial
+		(
+			/*Shader*/					colorShader,
+			/*Translate Vector*/		glm::vec3(0.0f),
+			/*Scale Vector*/			glm::vec3(1.0f),
+			/*Rotation Direction*/		glm::vec3(0.5f, 1.0f, 0.5f),
+			/*Rotation Speed*/			0.1f,
+			/*Color*/					glm::vec4(1.0f, 0.8f, 0.2f, 1.0f)
+		);
+
 		// Space box
 		// ---------
-		Object space
+		TextureMaterial* space = new TextureMaterial
 		(
-			new Texture("res/textures/space.jpg"),
-			0,
-			true,
-			0.5f,
-			glm::vec4(1.0f),
-			glm::scale(glm::mat4(1.0f), glm::vec3(400.0f)),
-			glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f)),
-			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)),
-			glm::vec3(0.0f, 1.0f, 0.0f),
-			0.1f
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f),
+			/*Scale Vector*/			glm::vec3(40000.0f),
+			/*Rotation Direction*/		glm::vec3(0.5f, 1.0f, 0.5f),
+			/*Rotation Speed*/			0.001f,
+			/*Texture*/					spaceTexture,
+			/*Texture Slot*/			0,
+			/*Texture Opacity*/			0.5f
+		);
+
+		// sun
+		// ---
+		TextureMaterial* sun = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f),
+			/*Scale Vector*/			glm::vec3(200.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.1f,
+			/*Texture*/					sunTexture,
+			/*Texture Slot*/			1,
+			/*Texture Opacity*/			1.0f
+		);
+		
+		// Mercury
+		// -------
+		TextureMaterial* mercury = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 400.0f),
+			/*Scale Vector*/			glm::vec3(30.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.2f,
+			/*Texture*/					mercuryTexture,
+			/*Texture Slot*/			2,
+			/*Texture Opacity*/			1.0f
+		);
+
+		// Venus
+		// -----
+		TextureMaterial* venus = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 600.0f),
+			/*Scale Vector*/			glm::vec3(50.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.3f,
+			/*Texture*/					venusTexture,
+			/*Texture Slot*/			3,
+			/*Texture Opacity*/			1.0f
 		);
 
 		// Earth
 		// -----
-		Object earth
+		TextureMaterial* earth = new TextureMaterial
 		(
-			new Texture("res/textures/earth.jpg"),
-			1,
-			true,
-			1.0f,
-			glm::vec4(1.0f),
-			glm::scale(glm::mat4(1.0f), glm::vec3(0.5f)),
-			glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f)),
-			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f)),
-			glm::vec3(1.0f, 0.5f, 0.0f),
-			1.0f
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 800.0f),
+			/*Scale Vector*/			glm::vec3(60.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.4f,
+			/*Texture*/					earthTexture,
+			/*Texture Slot*/			4,
+			/*Texture Opacity*/			1.0f
 		);
 
-		Object objects[] = { space, earth };
+		// Mars
+		// ----
+		TextureMaterial* mars = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 1000.0f),
+			/*Scale Vector*/			glm::vec3(40.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.5f,
+			/*Texture*/					marsTexture,
+			/*Texture Slot*/			5,
+			/*Texture Opacity*/			1.0f
+		);
+
+		// Jupiter
+		// -------
+		TextureMaterial* jupiter = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 1500.0f),
+			/*Scale Vector*/			glm::vec3(100.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.68f,
+			/*Texture*/					jupiterTexture,
+			/*Texture Slot*/			6,
+			/*Texture Opacity*/			1.0f
+		);
+
+		// Saturn
+		// ------
+		TextureMaterial* saturn = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 1800.0f),
+			/*Scale Vector*/			glm::vec3(90.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.7f,
+			/*Texture*/					saturnTexture,
+			/*Texture Slot*/			7,
+			/*Texture Opacity*/			1.0f
+		);
+
+		// Uranus
+		// ------
+		TextureMaterial* uranus = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 2100.0f),
+			/*Scale Vector*/			glm::vec3(70.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			0.8f,
+			/*Texture*/					uranusTexture,
+			/*Texture Slot*/			8,
+			/*Texture Opacity*/			1.0f
+		);
+
+		// Neptune
+		// -------
+		TextureMaterial* neptune = new TextureMaterial
+		(
+			/*Shader*/					textureShader,
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 2300.0f),
+			/*Scale Vector*/			glm::vec3(60.0f),
+			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
+			/*Rotation Speed*/			1.0f,
+			/*Texture*/					neptuneTexture,
+			/*Texture Slot*/			9,
+			/*Texture Opacity*/			1.0f
+		);
+
+		Material* materials[] = { sunLight, sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune };
 
 		while (!glfwWindowShouldClose(window))
 		{
@@ -238,18 +336,25 @@ int main(void)
 
 			renderer.clear();
 			
-			glm::mat4 projectionMat = glm::perspective(camera.getZoom(), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 1000.0f);
+			glm::mat4 projectionMat = glm::perspective(camera.getZoom(), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100000.0f);
 			glm::mat4 viewMat = camera.GetViewMatrix();
 
-			for (Object& object : objects)
 			{
-				object.m_Texture->bind(object.m_TextureSlot);
-				Material material(shader, object.m_ScaleMat, object.m_RotateMat, object.m_TranslateMat, object.m_RotationSpeed, object.m_RotationDirection, viewMat, projectionMat);
-				if (object.m_UseTexture)
-					material.setMaterialTexture(object.m_TextureSlot, object.m_TexOpacity);
-				else
-					material.setMaterialColor(object.m_Color);
-				renderer.draw(vao, ebo, shader);
+				space->setColorTexture();
+				space->updateModelMat(deltaTime);
+				space->updateViewMat(viewMat);
+				space->updateProjectionMat(projectionMat);
+				renderer.draw(cubeVAO, cubeEBO, space->getShaderId());
+			}
+
+			for (Material* material : materials)
+			{
+				material->setColorTexture();
+				material->updateModelMat(deltaTime);
+				material->updateViewMat(viewMat);
+				material->updateProjectionMat(projectionMat);
+
+				renderer.draw(sphereVAO, sphereEBO, material->getShaderId());
 			}
 
 			glfwSwapBuffers(window);
