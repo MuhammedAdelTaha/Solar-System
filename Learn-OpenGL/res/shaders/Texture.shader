@@ -37,22 +37,22 @@ void main()
 	vec3 lightColor = vec3(1.0f, 0.8f, 0.8f);
 	
 	// Ambient
-	float ambientStrength = 0.6f;
+	float ambientStrength = 0.8f;
 	vec3 ambient = ambientStrength * lightColor;
-	
-	// Diffuse
-	vec3 norm = normalize(v_Normal);
+    
+    // Diffuse
+    vec3 norm = normalize(v_Normal);
 	vec3 lightDir = normalize(lightPos - v_Position);
-	float diff = max(dot(norm, lightDir), 0.0);
+    float diff = max(dot(norm, lightDir), 0.0);
 	vec3 diffuse = diff * lightColor;
-	
-	// Specular
-	float specularStrength = 0.8f;
+    
+    // Specular
+	float specularStrength = 1.2f;
 	vec3 viewDir = normalize(-v_Position);
-	vec3 reflectDir = reflect(-lightDir, norm);
+    vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
-	
+
 
 	vec4 texColor = texture(u_Texture, v_TexCoord);
 	vec4 result = vec4((ambient + diffuse + specular) * texColor.rgb, u_TexOpacity);

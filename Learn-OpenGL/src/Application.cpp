@@ -47,7 +47,7 @@ static void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 static void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 
 // Camera
-Camera  camera(glm::vec3(0.0f, 0.0f, 100.0f));
+Camera  camera(glm::vec3(0.0f, 0.0f, 3000.0f));
 float lastX = WIDTH / 2.0;
 float lastY = HEIGHT / 2.0;
 bool keys[1024];
@@ -191,7 +191,7 @@ int main(void)
 			/*Translate Vector*/		glm::vec3(0.0f),
 			/*Scale Vector*/			glm::vec3(40000.0f),
 			/*Rotation Direction*/		glm::vec3(0.5f, 1.0f, 0.5f),
-			/*Rotation Speed*/			0.001f,
+			/*Rotation Speed*/			0.01f,
 			/*Texture*/					spaceTexture,
 			/*Texture Slot*/			0,
 			/*Texture Opacity*/			0.5f
@@ -233,7 +233,7 @@ int main(void)
 			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 600.0f),
 			/*Scale Vector*/			glm::vec3(50.0f),
 			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
-			/*Rotation Speed*/			0.3f,
+			/*Rotation Speed*/			0.28f,
 			/*Texture*/					venusTexture,
 			/*Texture Slot*/			3,
 			/*Texture Opacity*/			1.0f
@@ -247,7 +247,7 @@ int main(void)
 			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 800.0f),
 			/*Scale Vector*/			glm::vec3(60.0f),
 			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
-			/*Rotation Speed*/			0.4f,
+			/*Rotation Speed*/			0.35f,
 			/*Texture*/					earthTexture,
 			/*Texture Slot*/			4,
 			/*Texture Opacity*/			1.0f
@@ -261,7 +261,7 @@ int main(void)
 			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 1000.0f),
 			/*Scale Vector*/			glm::vec3(40.0f),
 			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
-			/*Rotation Speed*/			0.5f,
+			/*Rotation Speed*/			0.42f,
 			/*Texture*/					marsTexture,
 			/*Texture Slot*/			5,
 			/*Texture Opacity*/			1.0f
@@ -272,10 +272,10 @@ int main(void)
 		TextureMaterial* jupiter = new TextureMaterial
 		(
 			/*Shader*/					textureShader,
-			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 1500.0f),
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, -1500.0f),
 			/*Scale Vector*/			glm::vec3(100.0f),
 			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
-			/*Rotation Speed*/			0.68f,
+			/*Rotation Speed*/			0.5f,
 			/*Texture*/					jupiterTexture,
 			/*Texture Slot*/			6,
 			/*Texture Opacity*/			1.0f
@@ -286,10 +286,10 @@ int main(void)
 		TextureMaterial* saturn = new TextureMaterial
 		(
 			/*Shader*/					textureShader,
-			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 1800.0f),
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, -1800.0f),
 			/*Scale Vector*/			glm::vec3(90.0f),
 			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
-			/*Rotation Speed*/			0.7f,
+			/*Rotation Speed*/			0.65f,
 			/*Texture*/					saturnTexture,
 			/*Texture Slot*/			7,
 			/*Texture Opacity*/			1.0f
@@ -300,10 +300,10 @@ int main(void)
 		TextureMaterial* uranus = new TextureMaterial
 		(
 			/*Shader*/					textureShader,
-			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 2100.0f),
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, -2100.0f),
 			/*Scale Vector*/			glm::vec3(70.0f),
 			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
-			/*Rotation Speed*/			0.8f,
+			/*Rotation Speed*/			0.7f,
 			/*Texture*/					uranusTexture,
 			/*Texture Slot*/			8,
 			/*Texture Opacity*/			1.0f
@@ -314,7 +314,7 @@ int main(void)
 		TextureMaterial* neptune = new TextureMaterial
 		(
 			/*Shader*/					textureShader,
-			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, 2300.0f),
+			/*Translate Vector*/		glm::vec3(0.0f, 0.0f, -2300.0f),
 			/*Scale Vector*/			glm::vec3(60.0f),
 			/*Rotation Direction*/		glm::vec3(0.0f, 1.0f, 0.0f),
 			/*Rotation Speed*/			1.0f,

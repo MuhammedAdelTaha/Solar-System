@@ -14,7 +14,7 @@ enum CameraMovement {
 const float YAW = -90.0f; // YAW means Y-axis rotation
 const float PITCH = 0.0f; // PITCH means X-axis rotation
 const float SPEED = 700.0f; // camera speed
-const float SENSITIVITY = 0.7f; // mouse sensitivity
+const float SENSITIVITY = 0.6f; // mouse sensitivity
 const float ZOOM = 45.0f; // field of view
 
 class Camera
