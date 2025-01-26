@@ -103,4 +103,4 @@ This architecture ensures flexibility (e.g., adding new materials) and efficienc
 The use of OOP principles keeps the code modular and maintainable.
 
 ## Demo Video
-{{<figure "video" "video.mp4" "" "Solar System Simulation" "90%" "100%" "none" "True">}}
+[Solar System Simulation](video.mp4)
